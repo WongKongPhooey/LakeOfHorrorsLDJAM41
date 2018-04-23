@@ -1,0 +1,490 @@
+gameover = false
+points = 0
+totalpoints = 0
+addpoints = false
+boatx = 40
+boaty = 57 
+rodbasey = 59
+playerspr = 3
+buddyspr = 16
+baitspr = 7
+puddlespr = 9
+fishspr = rnd(8) + 48
+fishspr = flr(fishspr)
+moony = 50
+moontop = 20
+mooncount = 0
+moonwait = 50
+--moonwait = 5
+moondown = false
+puddlex = rnd(110) + 9
+puddley = rnd(30) + 80
+puddlecount = 0
+puddlewait = 120
+puddlespace = 0
+puddlespacing = 5
+puddleframe = 1
+puddleshow = false
+rodx = 71
+rody = 50
+linex = 100
+liney = 100
+linemomentumx =0
+linemomentumy = 0
+momentumcount = 0
+momentumcooldown = 2
+rodmaxlength = 17
+fishhooked = false
+fishcaught = false
+fishdropped = false
+hookcount = 0
+hookwait = rnd(40) + 10 
+surfacespotx = boatx+18
+surfacespoty = boaty+12
+rodspotx = surfacespotx
+rodspoty = surfacespoty - 20
+lifty = surfacespoty
+liftspeed = 4
+liftcount = 0
+showpoints = false
+horrorfishx = -20
+horrorfishy = 70
+horrorfishspr = 18
+horrorfishframe = 3
+horrorfishcount = 0
+horrorfishwait = rnd(90) + 30
+horrorfishshow = false
+horrorjumpy = 20
+horrorjumparc = 0
+horrorjumpvel = 5
+fisheaten = false
+protectcatches = false
+
+function endgame()
+  if moony == 50 and moondown == true then
+    gameover = true
+  end
+end
+
+function catchfish()
+  if points == 0 then
+    addpoints = true
+  end
+  if fishspr == 48 then
+    points = 10
+  end
+  if fishspr == 49 then
+    points = 15
+  end
+  if fishspr == 50 then
+    points = 20
+  end
+  if fishspr == 51 then
+    points = 25
+  end
+  if fishspr == 52 then
+    points = 30
+  end
+  if fishspr == 53 then
+    points = 40
+  end
+  if fishspr == 54 then
+    points = 50
+  end
+  if fishspr == 55 then
+    points = 100
+  end
+  if addpoints == true then
+    totalpoints+=points
+    addpoints = false
+  end
+  showpoints = true
+end
+
+function horrorfish()
+  horrorfishcount+=1
+  if horrorfishcount > horrorfishwait then
+    horrorfishcount = 0
+    horrorfishshow = true
+    fisheaten = false
+  end
+  if horrorfishshow == true then
+    horrorfishx+=2
+    horrorjumparc+=horrorjumpvel
+    if horrorfishcount % 2 == 0 then
+      horrorjumpvel-=1
+    end
+  end
+  if horrorfishy-horrorjumparc >= horrorfishy then
+    horrorfishshow = false
+    horrorjumpvel = 5
+    horrorjumparc = 0
+  end
+  if horrorjumpvel >= 2 then
+    horrorfishframe = 3
+  else
+    if horrorjumpvel >= 1 then
+      horrorfishframe = 2
+    else
+      if horrorjumpvel >= -2 then
+        horrorfishframe = 1
+      else
+        horrorfishframe = 2
+      end
+    end
+  end
+  if horrorfishx > 150 then
+    horrorfishx = -30
+    horrorfishy = rnd(30)+80
+    if horrorfishspr == 18 then
+      horrorfishspr = 34
+    else
+      horrorfishspr = 18
+    end
+  end
+  
+  if fishhooked == true and
+    horrorfishshow == true and
+    horrorfishx-4 < linex and
+    (horrorfishx+20) > linex and
+    horrorfishy-4-horrorjumparc < liney and
+    (horrorfishy+12-horrorjumparc) > liney then
+    lostfish()
+    totalpoints-=10
+    fisheaten = true
+  end
+end
+function moverod()
+  if protectcatches == false then
+    if btn(0) then
+      --left
+      if rodx > (boatx+10-rodmaxlength) then
+        rodx-= 1
+        linemomentumx-=1
+      end
+    end
+    if btn(1) then
+      --right
+      if rodx < (boatx+14+rodmaxlength) then
+        rodx+= 1
+        linemomentumx+=1
+      end
+    end
+    if btn(2) then
+      --up
+      if rody > (boaty-rodmaxlength) then
+        rody-= 1
+        linemomentumy-=1
+      end
+    end
+    if btn(3) then
+      --down
+      if rody <= boaty then
+        rody+= 1
+        linemomentumy+=1
+      end
+    end
+  end
+  if fishhooked == true then
+    if btn(4) then
+      if linex > surfacespotx then
+        linex-=1
+      end
+      if linex < surfacespotx then
+        linex+=1
+      end
+      if liney > surfacespoty then
+        liney-=1
+      end
+      if liney < surfacespoty then
+        liney+=1
+      end
+      if rodx > rodspotx then
+        rodx-=1
+      end
+      if rodx < rodspotx then
+        rodx+=1
+      end
+      if rody > rodspoty then
+        rody-=1
+      end
+      if rody < rodspoty then
+        rody+=1
+      end
+      if linex == surfacespotx and
+         liney == surfacespoty and
+         rodx == rodspotx then
+        fishcaught = true
+      end
+      if fishcaught == true then
+        liftcount+=1
+        if lifty <= (surfacespoty-7) then
+          catchfish()
+        else
+          if liftcount > liftspeed then
+            liftcount = 0
+            lifty-=1
+            liney-=1
+          end
+        end
+      end
+    end
+    if showpoints == false then
+      rody += (rnd(2)-1)
+    end
+    momentumcooldown = 0
+  else
+    momentumcooldown = 2
+  end
+  momentumcount+=1
+  if momentumcount > momentumcooldown then
+    momentumcount = 0
+    if linemomentumx < 0 then
+      linemomentumx+=1
+    end
+    if linemomentumx > 0 then
+      linemomentumx-=1
+    end
+    if linemomentumy < 0 then
+      linemomentumy+=1
+    end
+    if linemomentumy > 0 then
+      linemomentumy-=1
+    end
+  end
+  if linex > 118 and linemomentumx > 0 then
+    linemomentumx-=3
+  end
+  if linex < 10 and linemomentumx < 0 then
+    linemomentumx+=3
+  end
+  if liney > 118 and linemomentumy > 0 then
+    linemomentumy-=3
+  end
+  if liney < 74 and linemomentumy < 0 then
+    linemomentumy=0
+  end
+  linex += linemomentumx
+  liney += linemomentumy
+  
+  if btn(5) then
+    if showpoints == true and fishcaught == true then
+      resetrod()
+    else
+      protectcatches = true
+    end
+    if fishhooked == true then
+      fishdropped = true
+      lostfish()
+    end
+  else
+    protectcatches = false
+  end
+  
+  if protectcatches == true then
+    rodbasey = 63 
+  else
+    rodbasey = 59
+  end
+end
+
+function puddle()
+  puddlecount+= 1
+  if puddlecount > puddlewait then
+    puddlecount = 0
+    puddleshow = true
+  end
+  if puddleshow == true then
+    puddlespace+=1
+    if puddlespace > puddlespacing then
+      puddlespace = 0
+      puddleframe+=1
+    end
+    if puddleframe == 1 or puddleframe == 5 then
+      puddlespr = 9
+    end
+    if puddleframe == 2 or puddleframe == 4 then
+      puddlespr = 10
+    end
+    if puddleframe == 3 then
+      puddlespr = 11
+    end
+    if puddleframe >= 6 then
+      puddleframe = 1
+      puddleshow = false
+    end
+    if linex >= puddlex and
+       linex <= (puddlex+7) and
+       liney >= puddley+2 and
+       liney <= (puddley+6) then
+       hookcount+=1
+       if hookcount > hookwait then
+         fishhooked=true
+       end
+       fishdropped = false
+    end    
+  end
+end
+
+function moon()
+  mooncount+=1
+  if mooncount >= moonwait then
+    if moondown == true then
+      moony+=1
+    else
+      moony-=1
+    end
+    mooncount = 0
+  end
+  if moony <= moontop then
+    moondown = true
+  end
+end
+
+function lostfish()
+  fishhooked = false
+  fishcaught = false
+  showpoints = false
+  fishspr = rnd(8) + 48
+  fishspr = flr(fishspr)
+  puddlex = rnd(110) + 9
+  puddley = rnd(30) + 80
+  hookcount = 0
+  hookwait = rnd(40) + 10
+  points = 0
+end
+
+function resetrod()
+  fishhooked = false
+  fishcaught = false
+  showpoints = false
+  fishspr = rnd(8) + 48
+  fishspr = flr(fishspr)
+  puddlex = rnd(110) + 9
+  puddley = rnd(30) + 80
+  hookcount = 0
+  hookwait = rnd(40) + 10
+  points = 0
+  lifty = surfacespoty
+end
+
+function _update()
+  endgame()
+  if gameover == false then
+    moon()
+    moverod()
+    if fishhooked == false then
+      puddle()
+    else
+      puddleshow = false
+      puddlecount = 0
+      puddleframe = 0
+    end
+    horrorfish()
+    if rodx < (boatx+12) then
+      playerspr = 5
+    else
+      playerspr = 3
+    end
+    if protectcatches == true then
+      baitspr = 6
+    else
+      baitspr = 7
+    end
+  end
+end
+
+function _draw()
+  cls()
+  
+  --the moon
+  circfill(100,moony,10,5)
+  
+  --the lake
+  rectfill(0,64,128,128,1)
+  
+  --the boat
+  spr(0,boatx-8,boaty)
+  spr(1,boatx+8,boaty)
+  spr(32,boatx,boaty)
+  
+  --the player
+  if protectcatches == false then
+    spr(playerspr,boatx+8,boaty-2)
+  end
+
+  --the rod
+  line(boatx+12,rodbasey,rodx,rody,4)
+
+  --your buddy
+  spr(buddyspr,boatx-6,boaty-2)
+
+  --the baitbox
+  spr(baitspr,boatx+4,boaty-2)
+
+  --puddle
+  if puddleshow == true then
+    spr(puddlespr,puddlex,puddley)
+  end
+  
+  if horrorfishshow == true then 
+    --horror fish
+    spr(horrorfishspr,horrorfishx,horrorfishy-horrorjumparc)
+    spr(horrorfishspr+horrorfishframe,horrorfishx+8,horrorfishy-horrorjumparc)
+
+    --where the horror jumps out
+    rectfill(horrorfishx,horrorfishy+1,horrorfishx+16,horrorfishy+16,1)
+  end
+  
+  --the line
+  line(rodx,rody,linex,liney,6)
+  line(linex,liney,linex,liney,8)
+  
+  --where the fish lifts out
+  if fishcaught == true then
+    spr(fishspr,surfacespotx-3,lifty)
+    rectfill (surfacespotx-4,surfacespoty+1,surfacespotx+4,surfacespoty+8,1)
+  end
+  
+  --caught message
+  if showpoints == true then
+    print("bingo! (+"..points..")",boatx-10,boaty-16,7)
+  end
+  --stolen message
+  if fisheaten == true then
+    print("lost it! (-10)",boatx-10,boaty-16,8)
+  end
+  --dropped message
+  if fishdropped == true then
+    print("dropped it!",boatx-10,boaty-16,8)
+  end
+  
+  --game over
+  if gameover == true then
+    rectfill(17,67,112,97,8)
+    rectfill(18,68,111,96,7)
+    print("game over!",45,70,80) 
+    print("you survived the night!",20,80,0)
+    print("points: "..totalpoints,45,90,0)
+  end
+  
+  --title art
+  spr(44,2,2)
+  spr(45,10,2)
+  spr(46,18,2)
+  spr(47,26,2)
+  spr(60,2,10)
+  spr(61,10,10)
+  spr(62,18,10)
+  spr(63,26,10)
+  print("ldjam41",3,20,7)
+  
+  --ui
+  print("points: "..totalpoints,80,2,8)
+  print("(arrows) move rod (z) reel fish",2,112,7)
+  print("(x) store fish / drop rod",2,120,7)
+  
+  --dev output
+  --print("hooked: "..(fishhooked and 'true' or 'false'),2,26,8)
+  --print("frame: "..horrorfishframe.. " vel: "..horrorjumpvel,2,26,8)
+end
